@@ -11,7 +11,14 @@ export const fetchProducts = createAsyncThunk('products/fetchProducts', async ()
 
 // Create a new product
 export const createProduct = createAsyncThunk('products/createProduct', async (newProduct) => {
-    const { data } = await axiosInstance.post(URL, newProduct);
+  const token = localStorage.getItem('acces_token'); // Adjust according to your state structure
+  const config = {
+      headers: {  
+          Authorization: `Bearer ${token}`,
+      },
+  };
+    console.log(newProduct)
+    const { data } = await axiosInstance.post('http://localhost:4002/products', newProduct, config);
     return data; // Assume the API returns the created product
 });
 
@@ -21,7 +28,7 @@ export const editProduct = createAsyncThunk('products/editProduct', async (editP
 })
 
 export const deleteProduct = createAsyncThunk('products/deleteProduct', async (productId) => {
-    const { data } = await axiosInstance.delete(`${URL}/${productId}`, editProduct)
+    const { data } = await axiosInstance.delete(`${URL}/${productId}`, productId)
 })
 
 const productSlice = createSlice({

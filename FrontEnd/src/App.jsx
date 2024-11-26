@@ -7,7 +7,7 @@ import Cart from './components/Cart';
 import Navbar from './components/NavBar'; 
 import AddProducts from './components/productos/AddProduct'
 import Register from './components/Register'
-import { CartManager } from './components/CartManager'; 
+import CartManager from './components/CartManager'; 
 import './App.css'; 
 import ProductList from './components/MarketPage';
 import UserOrders from "./components/UserOrders"; 

@@ -21,8 +21,8 @@ const ProductList = () => {
   useEffect(() => {
     if (products.length > 0) {
       products.forEach((product) => {
-        if (product.imageID && !images[product.imageID]) {
-          dispatch(fetchImages(product.imageID));
+        if (product.imageId && !images[product.imageId]) {
+          dispatch(fetchImages(product.imageId));
         }
       });
     }
@@ -46,14 +46,14 @@ const ProductList = () => {
           <li>No hay productos disponibles</li>
         ) : (
           products.map((product) => {
-            const imageBase64 = images[product.imageID];
+            const imageBase64 = images[product.imageId];
 
             return (
               <li key={product.id} className="productItem">
                 {imageBase64 ? (
                   <img
-                    src={imageBase64}
-                    alt={product.description}
+                    src={`data:image/jpeg;base64,${imageBase64}`}
+                    alt={product.description || 'Producto sin descripción'}
                     className="productImage"
                   />
                 ) : (

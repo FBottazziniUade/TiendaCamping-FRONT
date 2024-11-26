@@ -1,7 +1,8 @@
-import React, { useState, useRef } from "react";
-import { useDispatch } from "react-redux";
+import React, { useState, useEffect, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { createProduct } from "../../Redux/productSlice";
 import { createImage } from "../../Redux/imageSlice";
+import { fetchCategories } from "../../Redux/categorySlice";
 import "../../styles/form.css";
 
 const Form = () => {
@@ -16,6 +17,15 @@ const Form = () => {
   const [imageFile, setImageFile] = useState(null); // Selected image file
   const hiddenFileInput = useRef(null); // File input reference
   const dispatch = useDispatch();
+  
+  const categories = useSelector((state) => state.categories.categories); // Get categories from the store
+  const loadingCategories = useSelector((state) => state.categories.loading);
+  const categoryError = useSelector((state) => state.categories.error);
+
+  // Fetch categories when the component mounts
+  useEffect(() => {
+    dispatch(fetchCategories());
+  }, [dispatch]);
 
   // Handle form input changes
   const handleChange = (e) => {
@@ -43,21 +53,22 @@ const Form = () => {
       alert("Por favor selecciona una imagen");
       return;
     }
-
+  
     try {
       // Dispatch the image upload action
       const uploadedImage = await dispatch(createImage(imageFile));
-
+      
       if (uploadedImage.payload) {
         // Get the image ID from the response
-        const imageId = uploadedImage.payload.id;
-
+        const imageId = uploadedImage.payload; // imageId is returned in the payload
+  
         // Create the product with the imageId
         const newProduct = { ...product, imageId };
-
+        console.log('addProduct: ', newProduct)
+  
         // Dispatch the action to create the product
-        await dispatch(createProduct(newProduct));
-
+        dispatch(createProduct(newProduct));
+  
         // Reset form fields
         setProduct({
           description: "",
@@ -66,7 +77,6 @@ const Form = () => {
           price: "",
           imageId: null,
         });
-        setImageFile(null);
       } else {
         console.error("Failed to upload image");
       }
@@ -87,13 +97,25 @@ const Form = () => {
         onChange={handleChange}
       />
 
-      <label>ID Categoría</label>
-      <input
-        type="text"
-        name="categoryId"
-        value={product.categoryId}
-        onChange={handleChange}
-      />
+      <label>Categoría</label>
+      {loadingCategories ? (
+        <p>Cargando categorías...</p>
+      ) : categoryError ? (
+        <p>Error al cargar categorías: {categoryError}</p>
+      ) : (
+        <select
+          name="categoryId"
+          value={product.categoryId}
+          onChange={handleChange}
+        >
+          <option value="">Selecciona una categoría</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.description}
+            </option>
+          ))}
+        </select>
+      )}
 
       <label>Stock</label>
       <input

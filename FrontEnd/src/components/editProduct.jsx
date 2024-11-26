@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchProducts, editProduct } from "../Redux/productSlice";
 import { fetchImages } from "../Redux/imageSlice";
+import { fetchCategories } from "../Redux/categorySlice"; // Import category fetching action
 import "../styles/form.css"; // Usar form.css para los estilos generales
 
 const EditProduct = () => {
@@ -12,6 +13,7 @@ const EditProduct = () => {
 
   const { products } = useSelector((state) => state.products);
   const { items: images } = useSelector((state) => state.images);
+  const { categories, loading, error } = useSelector((state) => state.categories); // Access categories from Redux store
 
   const [formData, setFormData] = useState({
     description: "",
@@ -20,18 +22,21 @@ const EditProduct = () => {
     categoryId: "",
     imageID: "",
   });
-  const [categories, setCategories] = useState([]);
   const [imageFile, setImageFile] = useState(null);
 
+  // Fetch products and categories when the component is mounted
   useEffect(() => {
-    // Fetch product list if not already loaded
     if (!products || products.length === 0) {
       dispatch(fetchProducts());
     }
-  }, [dispatch, products]);
 
+    if (!categories || categories.length === 0) {
+      dispatch(fetchCategories());
+    }
+  }, [dispatch, products, categories]);
+
+  // Populate form data for the selected product
   useEffect(() => {
-    // Populate form data for the selected product
     const product = products.find((p) => p.id === parseInt(productId, 10));
     if (product) {
       setFormData({
@@ -42,7 +47,6 @@ const EditProduct = () => {
         imageID: product.imageId,
       });
 
-      // Fetch image if present
       if (product.imageId) {
         dispatch(fetchImages(product.imageId));
       }
@@ -65,7 +69,6 @@ const EditProduct = () => {
     try {
       let imageId = formData.imageID;
 
-      // Upload image if a new file is selected
       if (imageFile) {
         const imageFormData = new FormData();
         imageFormData.append("file", imageFile);
@@ -84,7 +87,7 @@ const EditProduct = () => {
         imageId = uploadData.id;
       }
 
-      // Update product using Redux thunk
+      // Dispatch the edit product action
       dispatch(editProduct({ ...formData, imageID: imageId, id: productId }));
 
       alert("Producto actualizado con éxito");
@@ -134,28 +137,34 @@ const EditProduct = () => {
         </div>
         <div className="form-group">
           <label>Categoría:</label>
-          <select
-            name="categoryId"
-            value={formData.categoryId}
-            onChange={handleInputChange}
-            required
-            className="form-select"
-          >
-            <option value="">Selecciona una categoría</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
+          {loading ? (
+            <p>Cargando categorías...</p>
+          ) : error ? (
+            <p>Error al cargar categorías: {error}</p>
+          ) : (
+            <select
+              name="categoryId"
+              value={formData.categoryId}
+              onChange={handleInputChange}
+              required
+              className="form-select"
+            >
+              <option value="">Selecciona una categoría</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.description}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
         <div className="form-group">
           <label>Imagen actual:</label>
           {formData.imageID && images[formData.imageID] ? (
             <img
-              src={images[formData.imageID]}
-              alt="Imagen actual"
-              className="form-image"
+              src={`data:image/jpeg;base64,${images[formData.imageID] || ''}`}
+              alt={formData.description || 'Producto sin descripción'}
+              className="product-image"
             />
           ) : (
             <span className="form-no-image">Sin Imagen disponible</span>

@@ -5,7 +5,7 @@ const URL = 'http://localhost:4002/images';
 
 // Fetch a single image by ID
 export const fetchImages = createAsyncThunk('images/fetchImage', async (imageId, { getState }) => {
-    const token = getState().auth.token; // Adjust according to your state structure
+    const token = getState().auth.token;
     const config = {
         headers: {
             Authorization: `Bearer ${token}`,
@@ -16,11 +16,30 @@ export const fetchImages = createAsyncThunk('images/fetchImage', async (imageId,
 });
 
 
-// Create a new image
+
 export const createImage = createAsyncThunk('images/createImage', async (newImage) => {
-    const { data } = await axiosInstance.post(URL, newImage);
-    return data;
-});
+    try {
+      const formData = new FormData();
+      formData.append("file", newImage);
+  
+      const config = {
+        headers: {
+          'Content-Type': 'multipart/form-data', // Ensure it's set to multipart/form-data
+        },
+      };
+  
+      const { data } = await axiosInstance.post(URL, formData, config);
+      console.log('Image uploaded successfully:', data); // Check the response data
+  
+      return data.imageId; // Return only the image ID from the response
+    } catch (error) {
+      console.error('Error uploading image:', error.message);
+      throw error;
+    }
+  });
+  
+  
+  
 
 const imageSlice = createSlice({
     name: 'images',
@@ -28,6 +47,7 @@ const imageSlice = createSlice({
         items: {}, // Store images by ID
         loading: false,
         error: null,
+        id: 0,
     },
     reducers: {},
     extraReducers: (builder) => {
@@ -51,8 +71,9 @@ const imageSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(createImage.fulfilled, (state) => {
+            .addCase(createImage.fulfilled, (state, action) => {
                 state.loading = false;
+                state.id = action.payload;
             })
             .addCase(createImage.rejected, (state, action) => {
                 state.loading = false;
